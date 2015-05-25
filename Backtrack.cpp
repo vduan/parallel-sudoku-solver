@@ -145,50 +145,33 @@ void Backtrack::printBoard() {
 }
 
 
-pair<int, int> Backtrack::findEmptySpot(int location) {
-    for (int i = location + 1; i < N * N; i++) {
-        if (board[i] == 0) {
-            return make_pair<int, int>(i / N, i % N);
-        }
-    }
-
-    return make_pair<int, int>(-1, -1);
-}
-
-
-bool Backtrack::solveHelper(int i, int j, int location) {
-    cout << "solveHelper: i = " << i << ", j = " << j << ", location = " << location << endl;
-    // i < 0 if this is the first call
-
-    if (!validBoard(i, j)) {
-        return false;
-    }
-
-    if (Backtrack::doneBoard()) {
-        return true;
-    }
-
-    while (location < N * N) {
-        // find a empty spot
-        pair<int, int> next = Backtrack::findEmptySpot(location);
-        int x = next.first;
-        int y = next.second;
-        location = x * N + y;
-
-        if (x < 0) {
-            return false;
-        }
-
-        for (int k = 1; k <= N; k++) {
-            board[location] = k;
-            if (Backtrack::solveHelper(x, y, location)) {
+bool Backtrack::findEmptySpot(int &row, int &col) {
+    for (row = 0; row < N; row++) {
+        for (col = 0; col < N; col++) {
+            if (board[row * N + col] == 0) {
                 return true;
             }
         }
+    }
 
-        board[x * N + y] = 0;
+    return false;
+}
 
-        location++;
+
+bool Backtrack::solveHelper() {
+
+    int row, col;
+
+    if (!Backtrack::findEmptySpot(row, col)) {
+        return true;
+    }
+
+    for (int k = 1; k <= N; k++) {
+        board[row * N + col] = k;
+        if (validBoard(row, col) && Backtrack::solveHelper()) {
+            return true;
+        }
+        board[row * N + col] = 0;
     }
 
     return false;
@@ -208,9 +191,9 @@ Backtrack::~Backtrack() {
 
 void Backtrack::solve() {
     if (!Backtrack::validBoard(-1, -1)) {
-        cout << "Initial board is invalid." << endl;
-    } else {
-        cout << "Initial board is valid." << endl;
+        cout << "Initial board is invalid. Exiting now." << endl;
+
+        return;
     }
 
     if (Backtrack::doneBoard()) {
@@ -224,7 +207,7 @@ void Backtrack::solve() {
     }
 
 
-    if (Backtrack::solveHelper(-1, -1, 0)) {
+    if (Backtrack::solveHelper()) {
         cout << "Board is solvable:" << endl;
 
         Backtrack::printBoard();

@@ -10,12 +10,10 @@
 using namespace std;
 
 
-void initializeBoard(int *board, int N) {
+void initializeBoard2(int *board, int N) {
     for (int i = 0; i < N * N; i++) {
         board[i] = 0;
     }
-
-    return;
 
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -26,7 +24,7 @@ void initializeBoard(int *board, int N) {
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(0, N * N - 1);
 
-    for (int i = 0; i < 40; i++) {
+    for (int i = 0; i < 50; i++) {
         int idx = distribution(generator);
 
         board[idx] = 0;
@@ -35,7 +33,7 @@ void initializeBoard(int *board, int N) {
 
 
 // initialize the board
-void initializeBoard2(int *board, int N) {
+void initializeBoard(int *board, int N) {
         // initialize board to 0, which means empty spot
     for (int i = 0; i < N * N; i++) {
         board[i] = 0;
