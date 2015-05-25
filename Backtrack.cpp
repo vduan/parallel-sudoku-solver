@@ -77,7 +77,6 @@ bool Backtrack::validBoard(int r, int c) {
 
     // first check if the row is valid
     for (int i = 0; i < N; i++) {
-        // printSet(seen);
         int val = board[r * N + i];
         ret = seen.insert(val);
 
@@ -153,19 +152,6 @@ pair<int, int> Backtrack::findEmptySpot(int location) {
         }
     }
 
-    // set< pair<int, int> >::iterator it = empty.begin();
-    // set< pair<int, int> >::iterator temp;
-
-    // while (it != empty.end()) {
-    //     if (board[it->first * N + it->second] == 0) {
-    //         return *it;
-    //     } else {
-    //         temp = it;
-    //         it++;
-    //         empty.erase(temp);
-    //     }
-    // }
-
     return make_pair<int, int>(-1, -1);
 }
 
@@ -227,15 +213,7 @@ void Backtrack::solve() {
         cout << "Initial board is valid." << endl;
     }
 
-    for (int i = 0; i < N; i++) {
-        for (int j = 0; j < N; j++) {
-            if (board[i * N + j] == 0) {
-                empty.insert(make_pair(i, j));
-            }
-        }
-    }
-
-    if (empty.size() == 0) {
+    if (Backtrack::doneBoard()) {
         cout << "Board is already solved:" << endl;
 
         Backtrack::printBoard();

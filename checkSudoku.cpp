@@ -15,6 +15,8 @@ void initializeBoard(int *board, int N) {
         board[i] = 0;
     }
 
+    return;
+
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
             board[i * N + j] = (3 * i + j + i / 3) % 9 + 1;
@@ -24,7 +26,7 @@ void initializeBoard(int *board, int N) {
     std::default_random_engine generator;
     std::uniform_int_distribution<int> distribution(0, N * N - 1);
 
-    for (int i = 0; i < 43; i++) {
+    for (int i = 0; i < 40; i++) {
         int idx = distribution(generator);
 
         board[idx] = 0;
