@@ -11,10 +11,10 @@ accessed from the outside, declare them here */
 
 void cudaSudokuBacktrack(const unsigned int blocks,
         const unsigned int threadsPerBlock,
-        float *boards,
+        int *boards,
         const int numBoards,
-        int *done,
-        float *solved);
+        int *finished,
+        int *solved);
 
 
 

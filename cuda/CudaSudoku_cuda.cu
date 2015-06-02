@@ -14,7 +14,7 @@ void clearBitmap(bool *map, int size) {
 }
 
 __device__
-bool validBoard(float *board) {
+bool validBoard(int *board) {
     bool seen[N];
     clearBitmap(seen, N);
 
@@ -80,7 +80,7 @@ bool validBoard(float *board) {
 
 
 __device__
-bool validBoard(float *board, int r, int c) {
+bool validBoard(int *board, int r, int c) {
 
     // if r is less than 0, then just default case
     if (r < 0) {
@@ -142,7 +142,7 @@ bool validBoard(float *board, int r, int c) {
 
 
 __device__
-bool doneBoard(float *board) {
+bool doneBoard(int *board) {
     for (int i = 0; i < N * N; i++) {
         if (board[i] == 0) {
             return false;
@@ -154,7 +154,7 @@ bool doneBoard(float *board) {
 
 
 __device__
-bool findEmptySpot(float *board, int *row, int *col) {
+bool findEmptySpot(int *board, int *row, int *col) {
     for (*row = 0; *row < N; *row++) {
         for (*col = 0; *col < N; *col++) {
             if (board[*row * N + *col] == 0) {
@@ -168,7 +168,8 @@ bool findEmptySpot(float *board, int *row, int *col) {
 
 
 __device__
-bool solveHelper(float *board) {
+bool solveHelper(int *board) {
+    printf("calling solveHelper\n");
 
     int row, col;
     if (!findEmptySpot(board, &row, &col)) {
@@ -188,15 +189,21 @@ bool solveHelper(float *board) {
 
 
 __device__
-bool solve(float *board) {
+bool solve(int *board) {
+
+    printf("starting solve\n");
 
     // initial board is invalid
     if (!validBoard(board, -1, -1)) {
+
+        printf("solve: invalid board\n");
         return false;
     }
 
     // board is already solved
     if (doneBoard(board)) {
+
+        printf("solve: done board\n");
         return true;
     }
 
@@ -204,29 +211,36 @@ bool solve(float *board) {
     if (solveHelper(board)) {
 
         // solved
+        printf("solve: solved board\n");
         return true;
     } else {
 
         // unsolvable
+        printf("solve: unsolvable\n");
         return false;
     }
 }
 
 
 __global__
-void sudokuBacktrack(float *boards, const int numBoards, int *done, float *solved) {
+void sudokuBacktrack(int *boards, const int numBoards, int *finished, int *solved) {
 
-    unsigned int index = blockDim.x * blockIdx.x + threadIdx.x;
+    int index = blockDim.x * blockIdx.x + threadIdx.x;
 
-    float *currentBoard;
+    int *currentBoard;
 
-    while (!done && index < numBoards) {
+    // printf("done = %d and index = %d\n", *done, index);
+
+    while ((*finished == 0) && (index < numBoards)) {
+
+        printf("in kernel with index: %d and finished = %d\n", index, *finished);
 
         currentBoard = boards + index * 81;
 
         if (solve(currentBoard)) {
+            printf("solved at index: %d\n", index);
             // solved
-            *done = 1;
+            *finished = 1;
 
             // return the solved board
             for (int i = 0; i < N * N; i++) {
@@ -244,9 +258,12 @@ void sudokuBacktrack(float *boards, const int numBoards, int *done, float *solve
 
 void cudaSudokuBacktrack(const unsigned int blocks,
         const unsigned int threadsPerBlock,
-        float *boards,
+        int *boards,
         const int numBoards,
-        int *done,
-        float *solved) {
-    sudokuBacktrack<<<blocks, threadsPerBlock>>>(boards, numBoards, done, solved);
+        int *finished,
+        int *solved) {
+
+    printf("calling kernel\n");
+
+    sudokuBacktrack<<<blocks, threadsPerBlock>>>(boards, numBoards, finished, solved);
 }

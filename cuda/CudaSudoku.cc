@@ -3,6 +3,7 @@
 #include <cmath>
 #include <vector>
 #include <fstream>
+#include <cstring>
 
 
 #include <cuda_runtime.h>
@@ -39,6 +40,25 @@ void load(char *FileName, int *board) {
 }
 
 
+void printBoard(int *board) {
+  for (int i = 0; i < N; i++) {
+    if (i % n == 0) {
+      printf("-----------------------\n");
+    }
+
+    for (int j = 0; j < N; j++) {
+      if (j % n == 0) {
+        printf("| ");
+      }
+      printf("%d ", board[i * N + j]);
+    }
+
+    printf("|\n");
+  }
+  printf("-----------------------\n");
+}
+
+
 
 
 
@@ -59,47 +79,38 @@ int main(int argc, char* argv[]) {
   int *board = new int[N * N];
   load(filename, board);
 
-  for (int i = 0; i < N; i++) {
-    if (i % n == 0) {
-      printf("-----------------------\n");
-    }
-
-    for (int j = 0; j < N; j++) {
-      if (j % n == 0) {
-        printf("| ");
-      }
-      printf("%d ", board[i * N + j]);
-    }
-
-    printf("|\n");
-  }
-  printf("-----------------------\n");
-
-  return 0;
-
+  printBoard(board);
   
   // const unsigned int blocks = std::min(maxBlocks, (unsigned int) ceil(
   //             numberOfNodes/float(threadsPerBlock)));
 
-  float *dev_boards;
-  int *dev_output;
-  int *done;
-  float *dev_solved;
+  // cudaDeviceSetLimit(cudaLimitStackSize, 1 * N * N * 100000 * sizeof(float));
 
-  cudaMalloc(&dev_boards, sizeof(float));
-  cudaMalloc(&dev_output, sizeof(int));
-  cudaMalloc(&done, sizeof(int));
-  cudaMalloc(&dev_solved, N * N * sizeof(float));
+  int *dev_boards;
+  int *dev_finished;
+  int *dev_solved;
 
-  cudaMemset(done, 0, sizeof(int));
+  cudaMalloc(&dev_boards, N * N * sizeof(int));
+  cudaMalloc(&dev_finished, sizeof(int));
+  cudaMalloc(&dev_solved, N * N * sizeof(int));
 
-  cudaSudokuBacktrack(maxBlocks, threadsPerBlock, dev_boards, 10, done, dev_solved);
+  cudaMemcpy(dev_boards, board, N * N * sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemset(dev_finished, 0, sizeof(int));
+  cudaMemset(dev_solved, 0, N * N * sizeof(int));
 
-  int *output = (int*) malloc(sizeof(int));
+  printf("before kernel call\n");
 
-  cudaMemcpy(output, dev_output, sizeof(int), cudaMemcpyDeviceToHost);
+  cudaSudokuBacktrack(maxBlocks, threadsPerBlock, dev_boards, 1, dev_finished, dev_solved);
 
-  printf("output: %d\n", *output);
+  printf("after kernel call\n");
+
+  int *solved = (int*) malloc(N * N * sizeof(int));
+
+  memset(solved, 0, N * N * sizeof(int));
+
+  cudaMemcpy(solved, dev_solved, N * N * sizeof(int), cudaMemcpyDeviceToHost);
+
+  printBoard(solved);
   
   return 0;
 }
