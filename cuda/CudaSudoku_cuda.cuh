@@ -13,6 +13,8 @@ void cudaSudokuBacktrack(const unsigned int blocks,
         const unsigned int threadsPerBlock,
         int *boards,
         const int numBoards,
+        int *emptySpaces,
+        int *numEmptySpaces,
         int *finished,
         int *solved);
 

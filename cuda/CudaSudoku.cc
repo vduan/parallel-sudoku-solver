@@ -80,27 +80,39 @@ int main(int argc, char* argv[]) {
   load(filename, board);
 
   printBoard(board);
-  
-  // const unsigned int blocks = std::min(maxBlocks, (unsigned int) ceil(
-  //             numberOfNodes/float(threadsPerBlock)));
 
-  cudaDeviceSetLimit(cudaLimitStackSize, 1 * N * N * 10000000 * sizeof(float));
+  int *emptySpaces = new int[N * N];
+  memset(emptySpaces, 0, N * N * sizeof(int));
+  int numEmptySpaces = 0;
+  for (int i = 0; i < N * N; i++) {
+    if (board[i] == 0) {
+      emptySpaces[numEmptySpaces++] = i;
+    }
+  }
+
+  int numBoards = 1;
 
   int *dev_boards;
   int *dev_finished;
+  int *dev_emptySpaces;
+  int *dev_numEmptySpaces;
   int *dev_solved;
 
-  cudaMalloc(&dev_boards, N * N * sizeof(int));
+  cudaMalloc(&dev_boards, numBoards * N * N * sizeof(int));
   cudaMalloc(&dev_finished, sizeof(int));
+  cudaMalloc(&dev_emptySpaces, numBoards * N * N * sizeof(int));
+  cudaMalloc(&dev_numEmptySpaces, numBoards * sizeof(int));
   cudaMalloc(&dev_solved, N * N * sizeof(int));
 
-  cudaMemcpy(dev_boards, board, N * N * sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy(dev_boards, board, numBoards * N * N * sizeof(int), cudaMemcpyHostToDevice);
   cudaMemset(dev_finished, 0, sizeof(int));
+  cudaMemcpy(dev_emptySpaces, emptySpaces, numBoards * N * N * sizeof(int), cudaMemcpyHostToDevice);
+  cudaMemcpy(dev_numEmptySpaces, &numEmptySpaces, numBoards * sizeof(int), cudaMemcpyHostToDevice);
   cudaMemset(dev_solved, 0, N * N * sizeof(int));
 
   printf("before kernel call\n");
 
-  cudaSudokuBacktrack(maxBlocks, threadsPerBlock, dev_boards, 1, dev_finished, dev_solved);
+  cudaSudokuBacktrack(maxBlocks, threadsPerBlock, dev_boards, numBoards, dev_emptySpaces, dev_numEmptySpaces, dev_finished, dev_solved);
 
   printf("after kernel call\n");
 
@@ -117,6 +129,7 @@ int main(int argc, char* argv[]) {
   cudaFree(dev_finished);
   cudaFree(dev_solved);
   delete[] board;
+  delete[] emptySpaces;
   delete[] solved;
   
   return 0;
