@@ -10,10 +10,12 @@
 using namespace std;
 
 
-void initializeBoard2(int *board, int N) {
+void initializeBoard(int *board, int N) {
     for (int i = 0; i < N * N; i++) {
         board[i] = 0;
     }
+
+    return;
 
     for (int i = 0; i < N; i++) {
         for (int j = 0; j < N; j++) {
@@ -33,7 +35,7 @@ void initializeBoard2(int *board, int N) {
 
 
 // initialize the board
-void initializeBoard(int *board, int N) {
+void initializeBoard2(int *board, int N) {
         // initialize board to 0, which means empty spot
     for (int i = 0; i < N * N; i++) {
         board[i] = 0;
@@ -135,7 +137,7 @@ void initializeBoard(int *board, int N) {
 
 // print board
 void printBoard(int *board, int N, int n) {
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < n; i++) {
         cout << "-------------------------" << endl;
         for (int idx = i * n; idx < (i + 1) * n; idx++) {    
             for (int j = 0; j < 3; j++) {
