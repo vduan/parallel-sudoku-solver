@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   // const unsigned int blocks = std::min(maxBlocks, (unsigned int) ceil(
   //             numberOfNodes/float(threadsPerBlock)));
 
-  // cudaDeviceSetLimit(cudaLimitStackSize, 1 * N * N * 100000 * sizeof(float));
+  cudaDeviceSetLimit(cudaLimitStackSize, 1 * N * N * 10000000 * sizeof(float));
 
   int *dev_boards;
   int *dev_finished;
@@ -104,13 +104,20 @@ int main(int argc, char* argv[]) {
 
   printf("after kernel call\n");
 
-  int *solved = (int*) malloc(N * N * sizeof(int));
+  int *solved = new int[N * N];
 
   memset(solved, 0, N * N * sizeof(int));
 
   cudaMemcpy(solved, dev_solved, N * N * sizeof(int), cudaMemcpyDeviceToHost);
 
   printBoard(solved);
+
+
+  cudaFree(dev_boards);
+  cudaFree(dev_finished);
+  cudaFree(dev_solved);
+  delete[] board;
+  delete[] solved;
   
   return 0;
 }

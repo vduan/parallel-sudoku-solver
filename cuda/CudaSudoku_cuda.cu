@@ -14,7 +14,7 @@ void clearBitmap(bool *map, int size) {
 }
 
 __device__
-bool validBoard(int *board) {
+bool validBoard(const int *board) {
     bool seen[N];
     clearBitmap(seen, N);
 
@@ -80,7 +80,7 @@ bool validBoard(int *board) {
 
 
 __device__
-bool validBoard(int *board, int r, int c) {
+bool validBoard(const int *board, int r, int c) {
 
     // if r is less than 0, then just default case
     if (r < 0) {
@@ -142,7 +142,7 @@ bool validBoard(int *board, int r, int c) {
 
 
 __device__
-bool doneBoard(int *board) {
+bool doneBoard(const int *board) {
     for (int i = 0; i < N * N; i++) {
         if (board[i] == 0) {
             return false;
@@ -154,14 +154,26 @@ bool doneBoard(int *board) {
 
 
 __device__
-bool findEmptySpot(int *board, int *row, int *col) {
-    for (*row = 0; *row < N; *row++) {
-        for (*col = 0; *col < N; *col++) {
-            if (board[*row * N + *col] == 0) {
+bool findEmptySpot(const int *board, int *row, int *col) {
+    printf("calling findEmptySpot\n");
+    printf("board = %d and board[0][0] = %d\n", board, board[0 * N + 0]);
+    for (int r = 0; r < N; r++) {
+        for (int c = 0; c < N; c++) {
+            if (board[r * N + c] == 0) {
+                printf("r = %d and c = %d\n", r, c);
+                *row = r;
+                *col = c;
                 return true;
             }
         }
     }
+    // for (*row = 0; *row < N; *row = *row + 1) {
+    //     for (*col = 0; *col < N; *col = *col + 1) {
+    //         if (board[*row * N + *col] == 0) {
+    //             return true;
+    //         }
+    //     }
+    // }
 
     return false;
 }
@@ -169,18 +181,26 @@ bool findEmptySpot(int *board, int *row, int *col) {
 
 __device__
 bool solveHelper(int *board) {
-    printf("calling solveHelper\n");
+    printf("calling solveHelper with board = %d\n", board);
 
-    int row, col;
+    int row = 10;
+    int col = 10;
     if (!findEmptySpot(board, &row, &col)) {
         return true;
     }
 
+    printf("row = %d and col = %d and board[row, col] = %d\n", row, col, board[row * N + col]);
+
     for (int k = 1; k <= N; k++) {
         board[row * N + col] = k;
-        if (validBoard(board, row, col) && solveHelper(board)) {
-            return true;
+        if (validBoard(board, row, col)) {
+            if (solveHelper(board)) {
+                return true;
+            }
         }
+        // if (validBoard(board, row, col) && solveHelper(board)) {
+        //     return true;
+        // }
         board[row * N + col] = 0;
     }
 
@@ -264,6 +284,9 @@ void cudaSudokuBacktrack(const unsigned int blocks,
         int *solved) {
 
     printf("calling kernel\n");
+
+    cudaDeviceSetLimit(cudaLimitStackSize, 1 * N * N * 10000000 * sizeof(float));
+
 
     sudokuBacktrack<<<blocks, threadsPerBlock>>>(boards, numBoards, finished, solved);
 }
