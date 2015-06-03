@@ -3,9 +3,11 @@
 #include <cuda_runtime.h>
 #include <math.h>
 
+
+
 __global__
 void
-cudaBFSKernel(int *old_boards, int *new_boards, int total_boards, int *board_index) {
+cudaBFSKernel(int *old_boards, int *new_boards, int total_boards, int *board_index, int *empty_spaces, int *empty_space_count) {
     
     unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
     
@@ -15,7 +17,6 @@ cudaBFSKernel(int *old_boards, int *new_boards, int total_boards, int *board_ind
         //printf("index is %d\n", index);
         // find the next empty spot
         int found = 0;
-       
         for (int i = (index * 81); (i < (index * 81) + 81) && (found == 0); i++) {
             //printf("checking index number %d, number there is %d\n", i, old_boards[i]);
             // found a open spot
@@ -61,13 +62,24 @@ cudaBFSKernel(int *old_boards, int *new_boards, int total_boards, int *board_ind
                         // copy the whole board
 
                         int next_board_index = atomicAdd(board_index, 1);
+                        int empty_index = 0;
                         for (int r = 0; r < 9; r++) {
                             for (int c = 0; c < 9; c++) {
                                 new_boards[next_board_index * 81 + r * 9 + c] = old_boards[index * 81 + r * 9 + c];
+                                if (old_boards[index * 81 + r * 9 + c] == 0 && (r != row || c != col)) {
+                                    empty_spaces[empty_index + 81 * next_board_index] = r * 9 + c;
+
+                                    empty_index++;
+                                    printf("row and column of open spot is %d, %d\n", r, c);
+                                    printf("empty spots: %d\n", empty_index);
+                                }
                             }
                         }
+                        empty_space_count[next_board_index] = empty_index;
+                        printf("the skleeg is : %d\n", empty_index);
                         new_boards[next_board_index * 81 + row * 9 + col] = attempt;
                     }
+
                 }
             }
         }
@@ -81,9 +93,11 @@ void callBFSKernel(const unsigned int blocks,
                         int *old_boards,
                         int *new_boards,
                         int total_boards,
-                        int *board_index) {
+                        int *board_index,
+                        int *empty_spaces,
+                        int *empty_space_count) {
     cudaBFSKernel<<<blocks, threadsPerBlock>>>
-        (old_boards, new_boards, total_boards, board_index);
+        (old_boards, new_boards, total_boards, board_index, empty_spaces, empty_space_count);
 }
 
 int main(int argc, char** argv) {
@@ -100,7 +114,12 @@ int main(int argc, char** argv) {
 
     int *new_boards;
     int *old_boards;
+    int *empty_spaces;
+    int *empty_space_count;
+
     int n = 40000000; // = 5^9
+    cudaMalloc(&empty_spaces, n * sizeof(int));
+    cudaMalloc(&empty_space_count, (n / 81 + 1) * sizeof(int));
     cudaMalloc(&new_boards, n * sizeof(int));
     cudaMalloc(&old_boards, n * sizeof(int));
     // where to store the next new board generated
@@ -125,7 +144,7 @@ int first[81] = {0,0,0,0,3,7,6,0,0,
                  0,0,2,5,4,0,0,0,0};
             
     cudaMemcpy(old_boards, first, 81 * sizeof(int), cudaMemcpyHostToDevice);
-    callBFSKernel(blocks, threadsPerBlock, old_boards, new_boards, total_boards, board_index);
+    callBFSKernel(blocks, threadsPerBlock, old_boards, new_boards, total_boards, board_index, empty_spaces, empty_space_count);
     
     int *host_count = (int*) malloc(sizeof(int));
 
@@ -137,21 +156,26 @@ int first[81] = {0,0,0,0,3,7,6,0,0,
         cudaMemset(board_index, 0, sizeof(int));
         cudaMemset(new_boards, 0, n * sizeof(int)); 
 
-        callBFSKernel(blocks, threadsPerBlock, old_boards, new_boards, (*host_count), board_index);
+        callBFSKernel(blocks, threadsPerBlock, old_boards, new_boards, (*host_count), board_index, empty_spaces, empty_space_count);
     }
     cudaMemcpy(host_count, board_index, sizeof(int), cudaMemcpyDeviceToHost);
     printf("new number of boards retrieved is %d\n", *host_count);
-    cudaMemcpy(sudokus, new_boards, 81 * sizeof(int), cudaMemcpyDeviceToHost);    
-    for (int i = 0; i < 81; i++) {
-        if (i % 81 == 0) {
-            printf("\n\nNEW BOARD!\n");
-        }
-        if (i % 9 == 0 && (i % 81 != 0)) {
-            printf("\n");
-        }
-        printf("%d ", sudokus[i]);
-        
-    }
+    cudaMemcpy(sudokus, new_boards, 81 * sizeof(int), cudaMemcpyDeviceToHost);   
+
+    
+//    for (int i = 0; i < 81; i++) {
+//        if (i % 81 == 0) {
+//            printf("\n\nNEW BOARD!\n");
+//        }
+//        if (i % 9 == 0 && (i % 81 != 0)) {
+//            printf("\n");
+//        }
+//        printf("%d ", sudokus[i]);
+//        
+//    }
+    cudaMemcpy(host_count, empty_space_count, sizeof(int), cudaMemcpyDeviceToHost);
+    printf("empty = %d\n", *host_count);
+
     cudaFree(board_index);
     cudaFree(new_boards);
     cudaFree(old_boards);
