@@ -7,147 +7,275 @@
 
 #include "Backtrack.h"
 
+#define N 9
+#define n 3
+
 using namespace std;
 
 
-void initializeBoard(int *board, int N) {
-    for (int i = 0; i < N * N; i++) {
-        board[i] = 0;
+
+void clearBitmap(bool *map, int size) {
+    for (int i = 0; i < size; i++) {
+        map[i] = false;
     }
+}
 
-    return;
 
+bool validBoard(int *board) {
+    bool seen[N];
+    clearBitmap(seen, N);
+
+    // check if rows are valid
     for (int i = 0; i < N; i++) {
+        clearBitmap(seen, N);
+
         for (int j = 0; j < N; j++) {
-            board[i * N + j] = (3 * i + j + i / 3) % 9 + 1;
-        }
-    }
+            int val = board[i * N + j];
 
-    std::default_random_engine generator;
-    std::uniform_int_distribution<int> distribution(0, N * N - 1);
-
-    for (int i = 0; i < 50; i++) {
-        int idx = distribution(generator);
-
-        board[idx] = 0;
-    }
-}
-
-
-// initialize the board
-void initializeBoard2(int *board, int N) {
-        // initialize board to 0, which means empty spot
-    for (int i = 0; i < N * N; i++) {
-        board[i] = 0;
-    }
-
-    // set up a board, where 1 row is contiguous
-    // so, row i and column j can be accessed at board[j + i * N];
-    /*
-     *  -------------------------
-     *  | 0 0 3 | 0 7 0 | 0 6 0 |
-     *  | 1 4 0 | 0 0 0 | 8 0 0 |
-     *  | 6 5 0 | 0 0 4 | 9 0 0 |
-     *  -------------------------
-     *  | 7 6 0 | 8 0 2 | 0 0 9 |
-     *  | 3 1 0 | 0 5 0 | 0 8 2 |
-     *  | 2 0 0 | 9 0 3 | 0 1 5 |
-     *  -------------------------
-     *  | 0 0 1 | 7 0 0 | 0 9 8 |
-     *  | 0 0 6 | 0 0 0 | 0 3 1 |
-     *  | 0 9 0 | 0 8 0 | 5 0 0 |
-     *  -------------------------
-     */
-
-    board[0 * N + 2] = 3;
-    board[0 * N + 4] = 7;
-    board[0 * N + 7] = 6;
-    board[1 * N + 0] = 1;
-    board[1 * N + 1] = 4;
-    board[1 * N + 6] = 8;
-    board[2 * N + 0] = 6;
-    board[2 * N + 1] = 5;
-    board[2 * N + 5] = 4;
-    board[2 * N + 6] = 9;
-
-    board[3 * N + 0] = 7;
-    board[3 * N + 1] = 6;
-    board[3 * N + 3] = 8;
-    board[3 * N + 5] = 2;
-    board[3 * N + 8] = 9;
-    board[4 * N + 0] = 3;
-    board[4 * N + 1] = 1;
-    board[4 * N + 4] = 5;
-    board[4 * N + 7] = 8;
-    board[4 * N + 8] = 2;
-    board[5 * N + 0] = 2;
-    board[5 * N + 3] = 9;
-    board[5 * N + 5] = 3;
-    board[5 * N + 7] = 1;
-    board[5 * N + 8] = 5;
-
-    board[6 * N + 2] = 1;
-    board[6 * N + 3] = 7;
-    board[6 * N + 7] = 9;
-    board[6 * N + 8] = 8;
-    board[7 * N + 2] = 6;
-    board[7 * N + 7] = 3;
-    board[7 * N + 8] = 1;
-    board[8 * N + 1] = 9;
-    board[8 * N + 4] = 8;
-    board[8 * N + 6] = 5;
-
-
-    // old hard board
-    // board[0 * N + 4] = 5;
-    // board[0 * N + 5] = 7;
-    // board[0 * N + 6] = 6;
-    // board[0 * N + 7] = 4;
-
-    // board[1 * N + 3] = 2;
-
-    // board[2 * N + 0] = 7;
-    // board[2 * N + 7] = 2;
-    // board[2 * N + 8] = 3;
-
-    // board[3 * N + 1] = 9;
-    // board[3 * N + 4] = 6;
-    // board[3 * N + 6] = 4;
-    // board[3 * N + 7] = 5;
-
-    // board[4 * N + 0] = 1;
-    // board[4 * N + 8] = 7;
-
-    // board[5 * N + 1] = 5;
-    // board[5 * N + 2] = 6;
-    // board[5 * N + 4] = 7;
-    // board[5 * N + 7] = 3;
-
-    // board[6 * N + 0] = 6;
-    // board[6 * N + 1] = 1;
-    // board[6 * N + 8] = 8;
-
-    // board[7 * N + 5] = 6;
-
-    // board[8 * N + 1] = 8;
-    // board[8 * N + 2] = 3;
-    // board[8 * N + 3] = 1;
-    // board[8 * N + 4] = 2;
-}
-
-// print board
-void printBoard(int *board, int N, int n) {
-    for (int i = 0; i < n; i++) {
-        cout << "-------------------------" << endl;
-        for (int idx = i * n; idx < (i + 1) * n; idx++) {    
-            for (int j = 0; j < 3; j++) {
-                cout << "| ";
-                for (int k = 0; k < n; k++) {
-                    cout << board[idx * N + 3 * j + k] << " ";
+            if (val != 0) {
+                if (seen[val - 1]) {
+                    return false;
+                } else {
+                    seen[val - 1] = true;
                 }
             }
-            cout << "|" << endl;
         }
+    }
+
+    // check if columns are valid
+    for (int j = 0; j < N; j++) {
+        clearBitmap(seen, N);
+
+        for (int i = 0; i < N; i++) {
+            int val = board[i * N + j];
+
+            if (val != 0) {
+                if (seen[val - 1]) {
+                    return false;
+                } else {
+                    seen[val - 1] = true;
+                }
+            }
+        }
+    }
+
+    // finally check if the sub-boards are valid
+    for (int ridx = 0; ridx < n; ridx++) {
+        for (int cidx = 0; cidx < n; cidx++) {
+            clearBitmap(seen, N);
+
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    int val = board[(ridx * n + i) * N + (cidx * n + j)];
+
+                    if (val != 0) {
+                        if (seen[val - 1]) {
+                            return false;
+                        } else {
+                            seen[val-1] = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    // if we get here, then the board is valid
+    return true;
+}
+
+
+
+bool validBoard(int *board, int r, int c) {
+
+    // if r is less than 0, then just default case
+    if (r < 0) {
+        return validBoard(board);
+    }
+
+    bool seen[N];
+    clearBitmap(seen, N);
+
+    // check if row is valid
+    for (int i = 0; i < N; i++) {
+        int val = board[r * N + i];
+
+        if (val != 0) {
+            if (seen[val - 1]) {
+                return false;
+            } else {
+                seen[val - 1] = true;
+            }
+        }
+    }
+
+    // check if column is valid
+    clearBitmap(seen, N);
+    for (int j = 0; j < N; j++) {
+        int val = board[j * N + c];
+
+        if (val != 0) {
+            if (seen[val - 1]) {
+                return false;
+            } else {
+                seen[val - 1] = true;
+            }
+        }
+    }
+
+    // finally check if the sub-board is valid
+    int ridx = r / n;
+    int cidx = c / n;
+
+    clearBitmap(seen, N);
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            int val = board[(ridx * n + i) * N + (cidx * n + j)];
+
+            if (val != 0) {
+                if (seen[val - 1]) {
+                    return false;
+                } else {
+                    seen[val - 1] = true;
+                }
+            }
+        }
+    }
+
+    // if we get here, then the board is valid
+    return true;
+}
+
+
+
+bool doneBoard(int *board) {
+    for (int i = 0; i < N * N; i++) {
+        if (board[i] == 0) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+
+
+bool findEmptySpot(int *board, int *row, int *col) {
+    for (int r = 0; r < N; r++) {
+        for (int c = 0; c < N; c++) {
+            if (board[r * N + c] == 0) {
+                *row = r;
+                *col = c;
+                return true;
+            }
+        }
+    }
+    // for (*row = 0; *row < N; *row = *row + 1) {
+    //     for (*col = 0; *col < N; *col = *col + 1) {
+    //         if (board[*row * N + *col] == 0) {
+    //             return true;
+    //         }
+    //     }
+    // }
+
+    return false;
+}
+
+
+
+bool solveHelper(int *board) {
+    int row = 10;
+    int col = 10;
+    if (!findEmptySpot(board, &row, &col)) {
+        return true;
+    }
+
+    for (int k = 1; k <= N; k++) {
+        board[row * N + col] = k;
+        if (validBoard(board, row, col) && solveHelper(board)) {
+            return true;
+        }
+        board[row * N + col] = 0;
+    }
+
+    return false;
+}
+
+
+
+bool solve(int *board) {
+
+    // initial board is invalid
+    if (!validBoard(board, -1, -1)) {
+
+        printf("solve: invalid board\n");
+        return false;
+    }
+
+    // board is already solved
+    if (doneBoard(board)) {
+
+        printf("solve: done board\n");
+        return true;
+    }
+
+    // otherwise, try to solve the board
+    if (solveHelper(board)) {
+
+        // solved
+        printf("solve: solved board\n");
+        return true;
+    } else {
+
+        // unsolvable
+        printf("solve: unsolvable\n");
+        return false;
+    }
+}
+
+
+void printBoard(int *board) {
+  for (int i = 0; i < N; i++) {
+    if (i % n == 0) {
+      printf("-----------------------\n");
+    }
+
+    for (int j = 0; j < N; j++) {
+      if (j % n == 0) {
+        printf("| ");
+      }
+      printf("%d ", board[i * N + j]);
+    }
+
+    printf("|\n");
+  }
+  printf("-----------------------\n");
+}
+
+
+void load(char *FileName, int *board) {
+    FILE * a_file = fopen(FileName, "r");
+
+    if (a_file == NULL) {
+      printf("File load fail!\n"); return;
+    }
+
+    char temp;
+
+    for (int i = 0; i < N; i++) {
+      for (int j = 0; j < N; j++) {
+        if (!fscanf(a_file, "%c\n", &temp)) {
+          printf("File loading error!\n");
+          return;
+        }
+
+        if (temp >= '1' && temp <= '9') {
+          board[i * N + j] = (int) (temp - '0');
+        } else {
+          board[i * N + j] = 0;
+        }
+      }
     }
 }
 
@@ -155,22 +283,19 @@ void printBoard(int *board, int N, int n) {
 // main driver to test the sudoku program
 int main() {
     // create a sudoku board
-    int n = 3;          // dimensions of sub-board
-    int N = n * n;      // dimensions of board
+    // int n = 3;          // dimensions of sub-board
+    // int N = n * n;      // dimensions of board
 
-    int board[N * N];
+    int *board = new int[N * N];
+    load("puzzle.txt", board);
 
-    initializeBoard(board, N);
+    if (solve(board)) {
+        // solved
+        cout << "solved" << endl;
 
-    printBoard(board, N, n);
-
-    // solve the board
-    cout << "entering solver" << endl;
-    Backtrack solver(board, N, n);
-
-    solver.solve();
-
-    cout << "done with solver" << endl;
+        // return the solved board
+        printBoard(board);
+    }
 
 
     return 0;
