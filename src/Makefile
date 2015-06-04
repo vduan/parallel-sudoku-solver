@@ -35,7 +35,7 @@ else
 endif
 
 
-TARGETS = CudaSudoku
+TARGETS = ../bin/CudaSudoku
 
 all: $(TARGETS)
 
