@@ -91,7 +91,7 @@ int main(int argc, char* argv[]) {
     int *board_index;
 
     // maximum number of boards from breadth first search
-    const int sk = pow(2, 19);
+    const int sk = pow(2,26);
 
     // allocate memory on the device
     cudaMalloc(&empty_spaces, sk * sizeof(int));
@@ -117,12 +117,14 @@ int main(int argc, char* argv[]) {
 
     // number of boards after a call to BFS
     int host_count;
+    // number of iterations to run BFS for
+    int iterations = 18;
 
     // loop through BFS iterations to generate more boards deeper in the tree
-    for (unsigned int i = 0; i < iterations; i++) {
+    for (int i = 0; i < iterations; i++) {
         cudaMemcpy(&host_count, board_index, sizeof(int), cudaMemcpyDeviceToHost);
 
-        printf("total boards after an iteration %d: %d\n", i, *host_count);
+        printf("total boards after an iteration %d: %d\n", i, host_count);
 
         cudaMemset(board_index, 0, sizeof(int));
 

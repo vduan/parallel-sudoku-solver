@@ -35,17 +35,18 @@ else
 endif
 
 
-TARGETS = ../bin/CudaSudoku
+TARGETS = CudaSudoku
+TARGETSO = CudaSudoku_cuda.o
 
 all: $(TARGETS)
 
 CudaSudoku: CudaSudoku.cc CudaSudoku_cuda.o
-	$(CC) $< -o $@ CudaSudoku_cuda.o -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH) -fopenmp
+	$(CC) $< -o $@ CudaSudoku_cuda.o -O3 $(LDFLAGS) -Wall -I$(CUDA_INC_PATH) -fopenmp && mv $(TARGETS) ../bin/ && mv $(TARGETSO) ../bin/
 
 CudaSudoku_cuda.o: CudaSudoku_cuda.cu
 	$(NVCC) $(NVCCFLAGS) -O3 $(EXTRA_NVCCFLAGS) $(GENCODE_FLAGS) -I$(CUDA_INC_PATH) -o $@ -c $<
 
 clean:
-	rm -f *.o $(TARGETS)
+	rm -f ../bin/*.o ../bin/$(TARGETS)
 
 again: clean $(TARGETS)
