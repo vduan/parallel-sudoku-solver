@@ -136,7 +136,22 @@ We can do each of these steps in separate kernels.
 
 ##### Board Generation Kernel
 
-[insert MT's writeup]
+This kernel will expect the following things as input:
+
+- the previous frontier of boards from which we will be searching
+- a pointer to where the next layer of boards will be stored
+- total number of boards in the previous frontier
+- a pointer to where the indices of the empty spaces in the next layer of boards will be stored
+- a pointer to where the number of empty spaces in each board is stored
+
+The kernel will spawn threads where each one generates the children of the board. This can be done 
+without knowing the actual graph, because the children board of each input is simply the possible 
+boards given the first empty space. For example, if there is an empty and the numbers, 1,2,3,6,9 
+all work, this thread will add 5 new boards to the new boards array. For difficult sudokus, worst case
+the board starts to grow by a factor of 9 per level. Of course, in practice, this is never the case, 
+but given this, we have set a heuristic on how far the BFS will go. For us, we use the 20th level, as
+this will result in about ~50 thousand, which is a nice number to send to DFS, given that there is
+64k registers on the average single gpu (Kepler). 
 
 ##### Backtracking Kernel
 
@@ -166,8 +181,14 @@ boards we can process at once.
 
 ### Results
 
-In general, we find that using our parallelized backtracking algorithm results in speed ups on 
-
+In general, we find that using our parallelized backtracking algorithm results in speed ups on  the
+order of 10. For our two sample boards, we found that the cpu backtracing, which is entirely
+sequential results in ~4 milliseconds and ~3 seconds for the easy and hard boards, respectively.  On
+the gpu, we find that kernel calls take ~1 millisecond and ~800 milliseconds for the easy and hard
+boards, respectively. We also ran analyses on the backtracking algorithm for a single board to the
+kernel in order to get a better benchmark for how much BFS speedup is. The kernels for a  single
+board, and thus single thread DFS is about 30 times slower, than when we parallelize on the 20th
+level of the search space.
 
 ### References
 
@@ -177,9 +198,6 @@ https://www.ocf.berkeley.edu/~jchu/publicportal/sudoku/sudoku.paper.html
 2. For insights on the simulated annealing approach to solving Sudoku puzzles: "Sudoku Using
 Parallel Simulated Annealing" by Zahra Karimi-Dehkordi, Kamran Zamanifar, Ahmad Baraani-Dastjerdi,
 Nasser Ghasem-Aghaee. http://link.springer.com/chapter/10.1007/978-3-642-13498-2_60#
-
-
-
 
 
 
