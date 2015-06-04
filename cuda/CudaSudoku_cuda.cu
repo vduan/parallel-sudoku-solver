@@ -6,6 +6,9 @@
 #include "CudaSudoku_cuda.cuh"
 
 
+/**
+ * This function takes in a bitmap and clears them all to false.
+ */
 __device__
 void clearBitmap(bool *map, int size) {
     for (int i = 0; i < size; i++) {
@@ -13,6 +16,13 @@ void clearBitmap(bool *map, int size) {
     }
 }
 
+
+/**
+ * This device checks the entire board to see if it is valid.
+ *
+ * board: this is a N * N sized array that stores the board to check. Rows are stored contiguously,
+ *        so to access row r and col c, use board[r * N + c]
+ */
 __device__
 bool validBoard(const int *board) {
     bool seen[N];
@@ -79,6 +89,15 @@ bool validBoard(const int *board) {
 }
 
 
+/**
+ * This function takes a board and an index between 0 and N * N - 1. This function assumes the board
+ * without the value at changed is valid and checks for validity given the new change.
+ *
+ * board:   this is a N * N sized array that stores the board to check. Rows are stored
+ *          contiguously, so to access row r and col c, use board[r * N + c]
+ *
+ * changed: this is an integer that stores the index of the board that was changed
+ */
 __device__
 bool validBoard(const int *board, int changed) {
 
@@ -148,7 +167,28 @@ bool validBoard(const int *board, int changed) {
 }
 
 
-
+/**
+ * This kernel has each thread try to solve a different board in the input array using the
+ * backtracking algorithm.
+ *
+ * boards:      This is an array of size numBoards * N * N. Each board is stored contiguously,
+ *              and rows are contiguous within the board. So, to access board x, row r, and col c,
+ *              use boards[x * N * N + r * N + c]
+ *
+ * numBoards:   The total number of boards in the boards array.
+ *
+ * emptySpaces: This is an array of size numBoards * N * N. board is stored contiguously, and stores
+ *              the indices of the empty spaces in that board. Note that this N * N pieces may not
+ *              be filled.
+ *
+ * numEmptySpaces:  This is an array of size numBoards. Each value stores the number of empty spaces
+ *                  in the corresponding board.
+ *
+ * finished:    This is a flag that determines if a solution has been found. This is a stopping
+ *              condition for the kernel.
+ *
+ * solved:      This is an output array of size N * N where the solved board is stored.
+ */
 __global__
 void sudokuBacktrack(int *boards,
         const int numBoards,
@@ -165,8 +205,6 @@ void sudokuBacktrack(int *boards,
 
 
     while ((*finished == 0) && (index < numBoards)) {
-
-        //printf("in kernel with index = %d and finished = %d\n", index, *finished);
     
         int emptyIndex = 0;
 
@@ -204,12 +242,9 @@ void sudokuBacktrack(int *boards,
             }
         }
 
-
-
         index += gridDim.x * blockDim.x;
     }
 }
-
 
 
 void cudaSudokuBacktrack(const unsigned int blocks,
@@ -221,65 +256,81 @@ void cudaSudokuBacktrack(const unsigned int blocks,
         int *finished,
         int *solved) {
 
-    //printf("calling kernel\n");
-
-    sudokuBacktrack<<<blocks, threadsPerBlock>>>(boards, numBoards, emptySpaces, numEmptySpaces, finished, solved);
+    sudokuBacktrack<<<blocks, threadsPerBlock>>>
+        (boards, numBoards, emptySpaces, numEmptySpaces, finished, solved);
 }
 
+
+/**
+ * This kernel takes a set of old boards and finds all possible next boards by filling in the next
+ * empty space.
+ *
+ * old_boards:      This is an array of size sk. Each N * N section is another board. The rows
+ *                  are contiguous within the board. This array stores the previous set of boards.
+ *
+ * new_boards:      This is an array of size sk. Each N * N section is another board. The rows
+ *                  are contiguous within the board. This array stores the next set of boards.
+ *
+ * total_boards:    Number of old boards.
+ *
+ * board_index:     Index specifying the index of the next opening in new_boards.
+ *
+ * empty_spaces:    This is an array of size sk. Each N * N section is another board, storing the
+ *                  indices of empty spaces in new_boards.
+ *
+ * empty_space_count:   This is an array of size sk / N / N + 1 which stores the number of empty
+ *                      spaces in the corresponding board.
+ */
 __global__
 void
-cudaBFSKernel(int *old_boards, int *new_boards, int total_boards, int *board_index, int *empty_spaces, int *empty_space_count) {
+cudaBFSKernel(int *old_boards,
+        int *new_boards,
+        int total_boards,
+        int *board_index,
+        int *empty_spaces,
+        int *empty_space_count) {
     
     unsigned int index = blockIdx.x * blockDim.x + threadIdx.x;
     
     // board_index must start at zero 
 
     while (index < total_boards) {
-        //printf("index is %d\n", index);
         // find the next empty spot
         int found = 0;
-        for (int i = (index * 81); (i < (index * 81) + 81) && (found == 0); i++) {
-            //printf("checking index number %d, number there is %d\n", i, old_boards[i]);
+
+        for (int i = (index * N * N); (i < (index * N * N) + N * N) && (found == 0); i++) {
             // found a open spot
             if (old_boards[i] == 0) {
                 found = 1;
                 // get the correct row and column shits
-                //printf("open spot found is %d\n", i);
-                int temp = i - 81 * index;
-                int row = temp / 9;
-                int col = temp % 9;
+                int temp = i - N * N * index;
+                int row = temp / N;
+                int col = temp % N;
                 
-                
-                //printf("row and column of open spot is %d, %d\n", row, col);
                 // figure out which numbers work here
-                for (int attempt = 1; attempt <= 9; attempt++) {
-                    //printf("trying the number: %d\n", attempt);
+                for (int attempt = 1; attempt <= N; attempt++) {
                     int works = 1;
                     // row constraint, test various columns
-                    for (int c = 0; c < 9; c++) {
-                        if (old_boards[row * 9 + c + 81 * index] == attempt) {
-                            //printf("attempt number %d breaks here M\n", attempt);
+                    for (int c = 0; c < N; c++) {
+                        if (old_boards[row * N + c + N * N * index] == attempt) {
                             works = 0;
                         }
                     }
                     // column contraint, test various rows
-                    for (int r = 0; r < 9; r++) {
-                        if (old_boards[r * 9 + col + 81 * index] == attempt) {
-                            //printf("attempt number %d breaks here J\n", attempt);
+                    for (int r = 0; r < N; r++) {
+                        if (old_boards[r * N + col + N * N * index] == attempt) {
                             works = 0;
                         }
                     }
                     // box constraint
-                    for (int r = 3 * (row / 3); r < 3; r++) {
-                        for (int c = 3 * (col / 3); c < 3; c++) {
-                            if (old_boards[r * 9 + c + 81 * index] == attempt) {
-                            //printf("attempt number %d breaks here T for row, col = (%d,%d)\n", attempt, r, c);
+                    for (int r = n * (row / n); r < n; r++) {
+                        for (int c = n * (col / n); c < n; c++) {
+                            if (old_boards[r * N + c + N * N * index] == attempt) {
                                 works = 0;
                             }
                         }
                     }
                     if (works == 1) {
-                        //printf("the number: %d works\n", attempt);
                         // copy the whole board
 
                         int next_board_index = atomicAdd(board_index, 1);
@@ -291,23 +342,20 @@ cudaBFSKernel(int *old_boards, int *new_boards, int total_boards, int *board_ind
                                     empty_spaces[empty_index + 81 * next_board_index] = r * 9 + c;
 
                                     empty_index++;
-                                    //printf("row and column of open spot is %d, %d\n", r, c);
-                                    //printf("empty spots: %d\n", empty_index);
                                 }
                             }
                         }
                         empty_space_count[next_board_index] = empty_index;
-                        //printf("the skleeg is : %d\n", empty_index);
                         new_boards[next_board_index * 81 + row * 9 + col] = attempt;
                     }
-
                 }
             }
         }
+
         index += blockDim.x * gridDim.x;
     }
-
 }
+
 
 void callBFSKernel(const unsigned int blocks, 
                         const unsigned int threadsPerBlock,
