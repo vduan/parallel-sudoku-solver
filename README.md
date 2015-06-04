@@ -13,7 +13,7 @@ backtracking algorithm.
 
 Sudoku is a popular puzzle game usually played on a 9x9 board of numbers between 1 and 9.
 
-<img src=https://raw.githubusercontent.com/vduan/cs179sudoku/master/report/ex_sudoku_board.png alt="Example of Sudoku Board" style="width: 200px;" align="middle"/>
+![alt text](https://raw.githubusercontent.com/vduan/cs179sudoku/master/report/ex_sudoku_board.png "Example Sudoku Board")
 
 The goal of the game is to fill the board with numbers. However, each row can only contain one of
 each of the numbers between 1 and 9. Similarly, each column and 3x3 sub-board can only contain one
@@ -138,7 +138,13 @@ We can do each of these steps in separate kernels.
 
 [insert MT's writeup]
 
-#####
+##### Backtracking Kernel
+
+This kernel will expect the following things as input:
+
+- all the boards to search through
+- number of boards to search through
+- location of the empty spaces
 
 
 
