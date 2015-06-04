@@ -68,51 +68,79 @@ int main(int argc, char* argv[]) {
   if (argc < 4){
       printf("Usage: (threads per block) (max number of blocks) (filename)\n");
       exit(-1);
-  }
-
-  
-  /* Additional parameters for the assignment */
+  }  
   const unsigned int threadsPerBlock = atoi(argv[1]);
   const unsigned int maxBlocks = atoi(argv[2]);
-  char *filename = argv[3];
+  const unsigned int iterations = atoi(argv[3]);
+  int *new_boards;
+  int *old_boards;
+  int *empty_spaces;
+  int *empty_space_count;
 
-  int *board = new int[N * N];
-  load(filename, board);
+  const int sk = 40000000; // = 5^9
+  cudaMalloc(&empty_spaces, sk * sizeof(int));
+  cudaMalloc(&empty_space_count, (sk / 81 + 1) * sizeof(int));
+  cudaMalloc(&new_boards, sk * sizeof(int));
+  cudaMalloc(&old_boards, sk * sizeof(int));
+  // where to store the next new board generated
+  int *board_index;
+  // same as board index, except we need to set board_index to zero every time and this can stay
+  int total_boards = 1;
+  cudaMalloc(&board_index, sizeof(int));
+  cudaMemset(board_index, 0, sizeof(int));
+  cudaMemset(new_boards, 0, sk * sizeof(int));
+  cudaMemset(old_boards, 0, sk * sizeof(int));
+  int *sudokus = (int*) malloc(sk * sizeof(int));
+  // the actual bound
+  //memset(sudokus, 0, n* sizeof(int));
+  int first[81] = {0,2,0,1,7,8,0,3,0,
+                    0,4,0,3,0,2,0,9,0,
+                    1,0,0,0,0,0,0,0,6,
+                    0,0,8,6,0,3,5,0,0,
+                    3,0,0,0,0,0,0,0,4,
+                    0,0,6,7,0,9,2,0,0,
+                    9,0,0,0,0,0,0,0,2,
+                    0,8,0,9,0,1,0,6,0,
+                    0,1,0,4,3,6,0,5,0};
 
-  printBoard(board);
+  cudaMemcpy(old_boards, first, 81 * sizeof(int), cudaMemcpyHostToDevice);
+  callBFSKernel(maxBlocks, threadsPerBlock, old_boards, new_boards, total_boards, board_index, empty_spaces, empty_space_count);
 
-  int *emptySpaces = new int[N * N];
-  memset(emptySpaces, 0, N * N * sizeof(int));
-  int numEmptySpaces = 0;
-  for (int i = 0; i < N * N; i++) {
-    if (board[i] == 0) {
-      emptySpaces[numEmptySpaces++] = i;
-    }
+  int *host_count = (int*) malloc(sizeof(int));
+
+
+  for (unsigned int i = 0; i < iterations; i++) {
+      cudaMemcpy(host_count, board_index, sizeof(int), cudaMemcpyDeviceToHost);
+      printf("total boards after an iteration %d: %d\n", i, *host_count);
+           //cudaMemcpy(old_boards, new_boards, 81 * (*host_count) * sizeof(int), cudaMemcpyDeviceToDevice);
+      cudaMemset(board_index, 0, sizeof(int));
+      //cudaMemset(new_boards, 0, sk * sizeof(int)); 
+      if (i % 2 == 0) {
+        callBFSKernel(maxBlocks, threadsPerBlock, new_boards, old_boards, (*host_count), board_index, empty_spaces, empty_space_count);
+      }
+      else {
+        callBFSKernel(maxBlocks, threadsPerBlock, old_boards, new_boards, (*host_count), board_index, empty_spaces, empty_space_count);
+      }
   }
 
-  int numBoards = 1;
+  cudaMemcpy(host_count, board_index, sizeof(int), cudaMemcpyDeviceToHost);
+  printf("new number of boards retrieved is %d\n", *host_count);
 
-  int *dev_boards;
   int *dev_finished;
-  int *dev_emptySpaces;
-  int *dev_numEmptySpaces;
   int *dev_solved;
 
-  cudaMalloc(&dev_boards, numBoards * N * N * sizeof(int));
   cudaMalloc(&dev_finished, sizeof(int));
-  cudaMalloc(&dev_emptySpaces, numBoards * N * N * sizeof(int));
-  cudaMalloc(&dev_numEmptySpaces, numBoards * sizeof(int));
   cudaMalloc(&dev_solved, N * N * sizeof(int));
 
-  cudaMemcpy(dev_boards, board, numBoards * N * N * sizeof(int), cudaMemcpyHostToDevice);
   cudaMemset(dev_finished, 0, sizeof(int));
-  cudaMemcpy(dev_emptySpaces, emptySpaces, numBoards * N * N * sizeof(int), cudaMemcpyHostToDevice);
-  cudaMemcpy(dev_numEmptySpaces, &numEmptySpaces, numBoards * sizeof(int), cudaMemcpyHostToDevice);
   cudaMemset(dev_solved, 0, N * N * sizeof(int));
 
   printf("before kernel call\n");
-
-  cudaSudokuBacktrack(maxBlocks, threadsPerBlock, dev_boards, numBoards, dev_emptySpaces, dev_numEmptySpaces, dev_finished, dev_solved);
+  if (iterations % 2 == 1) {
+     // if odd number of iterations run, then send it old boards not new boards;
+     new_boards = old_boards;
+  }
+  cudaSudokuBacktrack(maxBlocks, threadsPerBlock, new_boards, (*host_count), empty_spaces, empty_space_count, dev_finished, dev_solved);
 
   printf("after kernel call\n");
 
@@ -125,12 +153,16 @@ int main(int argc, char* argv[]) {
   printBoard(solved);
 
 
-  cudaFree(dev_boards);
   cudaFree(dev_finished);
   cudaFree(dev_solved);
-  delete[] board;
-  delete[] emptySpaces;
   delete[] solved;
+  cudaFree(board_index);
+  cudaFree(new_boards);
+  cudaFree(old_boards);
+  free(sudokus);
+
+
+
   
   return 0;
 }
