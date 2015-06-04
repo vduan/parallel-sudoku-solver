@@ -171,8 +171,12 @@ boards we can process at once.
 
 ### References
 
-1. For insights on applying Knuth's Dancing Links algorithm to solving sudoku:
+1. For insights on applying Knuth's Dancing Links algorithm to solving Sudoku puzzles:
 https://www.ocf.berkeley.edu/~jchu/publicportal/sudoku/sudoku.paper.html
+
+2. For insights on the simulated annealing approach to solving Sudoku puzzles: "Sudoku Using
+Parallel Simulated Annealing" by Zahra Karimi-Dehkordi, Kamran Zamanifar, Ahmad Baraani-Dastjerdi,
+Nasser Ghasem-Aghaee. http://link.springer.com/chapter/10.1007/978-3-642-13498-2_60#
 
 
 
