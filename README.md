@@ -21,7 +21,7 @@ of each of the numbers between 1 and 9. This makes for an engaging and challengi
 
 A standard Sudoku puzzle may have about 50-60 empty spaces to solve for. A brute force algorithm
 would have an incredibly large search space to wade through. In fact, the task of solving a Sudoku
-puzzle is NP-hard.
+puzzle is NP-complete.
 
 ##### Solving Algorithm
 
@@ -145,8 +145,34 @@ This kernel will expect the following things as input:
 - all the boards to search through
 - number of boards to search through
 - location of the empty spaces
+- number of empty spaces
+
+The kernel will then spawn threads that each individually handle one board at a time. It will do the
+classic backtracking algorithm as described earlier.
+
+It is important to note that recursion has some issues on GPU programming. While it is supported for
+compute capability >=2.0, we found that implementing it resulted in strange behavior, even for a
+single thread. The same code may be run on the cpu and run just fine. Thus, we switched from using
+the implicit stack of recursive depth first search (function call stack) to an explicit stack of
+depth first search, where we try values at each empty space and backtrack. This is why we also
+include the location of the empty spaces and the number of empty spaces total.
+
+We also use a global finished flag so that when a solution is found, all threads are notified and
+the kernel can terminate.
+
+This kernel allows us to work on these boards at (# of threads) the speed because that is how many
+boards we can process at once.
 
 
+### Results
+
+#####
+
+
+### References
+
+1. For insights on applying Knuth's Dancing Links algorithm to solving sudoku:
+https://www.ocf.berkeley.edu/~jchu/publicportal/sudoku/sudoku.paper.html
 
 
 
