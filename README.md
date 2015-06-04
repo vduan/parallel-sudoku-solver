@@ -201,3 +201,19 @@ Nasser Ghasem-Aghaee. http://link.springer.com/chapter/10.1007/978-3-642-13498-2
 
 
 
+
+### How to run parallel Sudoku solver
+
+1. To compile the code, navigate to the src/ directory and run make. The executable will appear in
+the bin/ directory.
+
+2. To run the solver, run the executable with arguments for threads per block, max number of blocks,
+and filename of the puzzle. We have supplied some sample boards in the res/sample_inputs/ directory.
+You can, of course, create your own boards to test. The numbers in the file should be 0 for empty,
+and between 1 and 9 for filled spaces.
+
+```
+cd SUDOKU_DIR/src/
+make
+SUDOKU_DIR/bin/CudaSudoku 512 256 SUDOKU_DIR/res/sample_inputs/hard_1.txt
+```
