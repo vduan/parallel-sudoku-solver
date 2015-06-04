@@ -166,7 +166,7 @@ boards we can process at once.
 
 ### Results
 
-#####
+In general, we find that using our parallelized backtracking algorithm results in speed ups on 
 
 
 ### References
