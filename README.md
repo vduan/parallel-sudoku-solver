@@ -13,7 +13,7 @@ backtracking algorithm.
 
 Sudoku is a popular puzzle game usually played on a 9x9 board of numbers between 1 and 9.
 
-![alt text](https://raw.githubusercontent.com/vduan/cs179sudoku/master/report/ex_sudoku_board.png "Example Sudoku Board")
+![alt text](https://github.com/vduan/cs179sudoku/blob/master/res/img/ex_sudoku_board.png?raw=true "Example Sudoku Board")
 
 The goal of the game is to fill the board with numbers. However, each row can only contain one of
 each of the numbers between 1 and 9. Similarly, each column and 3x3 sub-board can only contain one
