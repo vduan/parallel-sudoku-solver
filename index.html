@@ -22,23 +22,23 @@
       <h1>
 <a id="parallelized-sudoku-solver-on-the-gpu" class="anchor" href="#parallelized-sudoku-solver-on-the-gpu" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parallelized Sudoku Solver on the GPU</h1>
 
-<h6>
-<a id="victor-duan-and-michael-teng" class="anchor" href="#victor-duan-and-michael-teng" aria-hidden="true"><span class="octicon octicon-link"></span></a>Victor Duan and Michael Teng</h6>
+<h4>
+<a id="victor-duan-and-michael-teng" class="anchor" href="#victor-duan-and-michael-teng" aria-hidden="true"><span class="octicon octicon-link"></span></a>Victor Duan and Michael Teng</h4>
 
-<h6>
-<a id="cs-179-gpu-programming-caltech-spring-2015" class="anchor" href="#cs-179-gpu-programming-caltech-spring-2015" aria-hidden="true"><span class="octicon octicon-link"></span></a>CS 179: GPU Programming Caltech Spring 2015</h6>
+<h4>
+<a id="cs-179-gpu-programming-caltech-spring-2015" class="anchor" href="#cs-179-gpu-programming-caltech-spring-2015" aria-hidden="true"><span class="octicon octicon-link"></span></a>CS 179: GPU Programming Caltech Spring 2015</h4>
 
-<h3>
-<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h3>
+<h2>
+<a id="summary" class="anchor" href="#summary" aria-hidden="true"><span class="octicon octicon-link"></span></a>Summary</h2>
 
 <p>We implemented a parallelized CUDA program that can efficiently solve a Sudoku puzzle using a
 backtracking algorithm.</p>
 
-<h3>
-<a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h3>
+<h2>
+<a id="background" class="anchor" href="#background" aria-hidden="true"><span class="octicon octicon-link"></span></a>Background</h2>
 
-<h5>
-<a id="introduction-to-sudoku" class="anchor" href="#introduction-to-sudoku" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction to Sudoku</h5>
+<h3>
+<a id="introduction-to-sudoku" class="anchor" href="#introduction-to-sudoku" aria-hidden="true"><span class="octicon octicon-link"></span></a>Introduction to Sudoku</h3>
 
 <p>Sudoku is a popular puzzle game usually played on a 9x9 board of numbers between 1 and 9.</p>
 
@@ -52,8 +52,8 @@ of each of the numbers between 1 and 9. This makes for an engaging and challengi
 would have an incredibly large search space to wade through. In fact, the task of solving a Sudoku
 puzzle is NP-complete.</p>
 
-<h5>
-<a id="solving-algorithm" class="anchor" href="#solving-algorithm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Solving Algorithm</h5>
+<h3>
+<a id="solving-algorithm" class="anchor" href="#solving-algorithm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Solving Algorithm</h3>
 
 <p>A common algorithm to solve Sudoku boards is called backtracking. This algorithm is essentially a
 depth first search in the tree of all possible guesses in the empty space of the Sudoku board. The
@@ -77,8 +77,8 @@ more clearly with the pseudocode of the algorithm here:</p>
     return false;
 </code></pre>
 
-<h5>
-<a id="parallelization-challenges" class="anchor" href="#parallelization-challenges" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parallelization Challenges</h5>
+<h3>
+<a id="parallelization-challenges" class="anchor" href="#parallelization-challenges" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parallelization Challenges</h3>
 
 <p>At first glance, this algorithm, and indeed depth first search in general, does not appear to be
 very parallelizable. This is because the algorithm depends on a stack. In the recursive case, the
@@ -86,11 +86,11 @@ stack is implicit in the function call stack. Stacks are hard to parallelize bec
 all work off of the same stack and productively move forward in the algorithm together without
 causing very high contention for access to the stack.</p>
 
-<h5>
-<a id="alternative-solutions" class="anchor" href="#alternative-solutions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Alternative Solutions</h5>
+<h3>
+<a id="alternative-solutions" class="anchor" href="#alternative-solutions" aria-hidden="true"><span class="octicon octicon-link"></span></a>Alternative Solutions</h3>
 
-<h6>
-<a id="simulated-annealing" class="anchor" href="#simulated-annealing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Simulated Annealing</h6>
+<h4>
+<a id="simulated-annealing" class="anchor" href="#simulated-annealing" aria-hidden="true"><span class="octicon octicon-link"></span></a>Simulated Annealing</h4>
 
 <p>Simulated annealing is a heuristic to solve optimization problems using probabilistic methods. The
 basic idea is to begin by filling the Sudoku board with the numbers. These numbers need not be in
@@ -115,8 +115,8 @@ we can see that many of these swaps may not really interact with each other (if 
 different sub-boards). Additionally, there is not really an order that needs to be preserved. Thus,
 this looks like a parallelizable approach to solving Sudoku puzzles that is ideal for the GPU.</p>
 
-<h6>
-<a id="dancing-links" class="anchor" href="#dancing-links" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dancing Links</h6>
+<h4>
+<a id="dancing-links" class="anchor" href="#dancing-links" aria-hidden="true"><span class="octicon octicon-link"></span></a>Dancing Links</h4>
 
 <p>The Dancing Links algorithm was devloped by Donald Knuth to solve the exact cover problem. Without
 getting into the details, the exact cover problem takes a matrix of 0's and 1s and searches for a
@@ -142,8 +142,8 @@ represents a space-number pairing, so the exact cover will be a solution to the 
 its core, it is similar to the depth first search solution and will face similar parallelization
 challenges.</p>
 
-<h6>
-<a id="parallelization-over-different-branches-of-the-depth-first-search" class="anchor" href="#parallelization-over-different-branches-of-the-depth-first-search" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parallelization over different branches of the depth first search</h6>
+<h4>
+<a id="parallelization-over-different-branches-of-the-depth-first-search" class="anchor" href="#parallelization-over-different-branches-of-the-depth-first-search" aria-hidden="true"><span class="octicon octicon-link"></span></a>Parallelization over different branches of the depth first search</h4>
 
 <p>Finally, we can modify the depth first search approach so that threads can function independently
 without all reading from the same stack. Breadth first search is easy to parallelize, so we can
@@ -156,11 +156,11 @@ cpu.</p>
 <p>We can see that both of these steps are much easier to parallelize than the original depth first
 search solution. In the end, this is the primary approach we chose to focus on.</p>
 
-<h3>
-<a id="approach-parallel-backtracking" class="anchor" href="#approach-parallel-backtracking" aria-hidden="true"><span class="octicon octicon-link"></span></a>Approach: Parallel Backtracking</h3>
+<h2>
+<a id="approach-parallel-backtracking" class="anchor" href="#approach-parallel-backtracking" aria-hidden="true"><span class="octicon octicon-link"></span></a>Approach: Parallel Backtracking</h2>
 
-<h5>
-<a id="algorithm" class="anchor" href="#algorithm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Algorithm</h5>
+<h3>
+<a id="algorithm" class="anchor" href="#algorithm" aria-hidden="true"><span class="octicon octicon-link"></span></a>Algorithm</h3>
 
 <p>The parallel approach to backtracking can be broken down into two main steps:</p>
 
@@ -176,8 +176,8 @@ the depth first search approach in parallel, which allows for great speedup.</p>
 
 <p>We can do each of these steps in separate kernels.</p>
 
-<h5>
-<a id="board-generation-kernel" class="anchor" href="#board-generation-kernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>Board Generation Kernel</h5>
+<h3>
+<a id="board-generation-kernel" class="anchor" href="#board-generation-kernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>Board Generation Kernel</h3>
 
 <p>This kernel will expect the following things as input:</p>
 
@@ -198,8 +198,8 @@ but given this, we have set a heuristic on how far the BFS will go. For us, we u
 this will result in about ~50 thousand, which is a nice number to send to DFS, given that there is
 64k registers on the average single gpu (Kepler). </p>
 
-<h5>
-<a id="backtracking-kernel" class="anchor" href="#backtracking-kernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backtracking Kernel</h5>
+<h3>
+<a id="backtracking-kernel" class="anchor" href="#backtracking-kernel" aria-hidden="true"><span class="octicon octicon-link"></span></a>Backtracking Kernel</h3>
 
 <p>This kernel will expect the following things as input:</p>
 
@@ -226,8 +226,8 @@ the kernel can terminate.</p>
 <p>This kernel allows us to work on these boards at (# of threads) the speed because that is how many
 boards we can process at once.</p>
 
-<h3>
-<a id="results" class="anchor" href="#results" aria-hidden="true"><span class="octicon octicon-link"></span></a>Results</h3>
+<h2>
+<a id="results" class="anchor" href="#results" aria-hidden="true"><span class="octicon octicon-link"></span></a>Results</h2>
 
 <p>In general, we find that using our parallelized backtracking algorithm results in speed ups on  the
 order of 10. For our two sample boards, we found that the cpu backtracing, which is entirely
@@ -238,8 +238,8 @@ kernel in order to get a better benchmark for how much BFS speedup is. The kerne
 board, and thus single thread DFS is about 30 times slower, than when we parallelize on the 20th
 level of the search space.</p>
 
-<h3>
-<a id="references" class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h3>
+<h2>
+<a id="references" class="anchor" href="#references" aria-hidden="true"><span class="octicon octicon-link"></span></a>References</h2>
 
 <ol>
 <li><p>For insights on applying Knuth's Dancing Links algorithm to solving Sudoku puzzles:
@@ -249,8 +249,8 @@ Parallel Simulated Annealing" by Zahra Karimi-Dehkordi, Kamran Zamanifar, Ahmad 
 Nasser Ghasem-Aghaee. <a href="http://link.springer.com/chapter/10.1007/978-3-642-13498-2_60#">http://link.springer.com/chapter/10.1007/978-3-642-13498-2_60#</a></p></li>
 </ol>
 
-<h3>
-<a id="how-to-run-parallel-sudoku-solver" class="anchor" href="#how-to-run-parallel-sudoku-solver" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to run parallel Sudoku solver</h3>
+<h2>
+<a id="how-to-run-parallel-sudoku-solver" class="anchor" href="#how-to-run-parallel-sudoku-solver" aria-hidden="true"><span class="octicon octicon-link"></span></a>How to run parallel Sudoku solver</h2>
 
 <ol>
 <li><p>To compile the code, navigate to the src/ directory and run make. The executable will appear in
